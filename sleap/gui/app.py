@@ -48,6 +48,8 @@ frame and instances listed in data view table.
 
 import re
 import os
+os.chdir('C:\\Users\\Surface\\OneDrive\\Desktop\\Chalmers\\Thesis\\Seabird_Master_Thesis\\sleap')
+print(os.getcwd())
 import random
 import platform
 from pathlib import Path

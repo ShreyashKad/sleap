@@ -27,7 +27,7 @@ author = "Talmo D. Pereira"
 copyright = "2019–2022, Talmo Lab"
 
 # The short X.Y version
-version = "1.2.0"
+version = "1.2.1"
 
 # Get the sleap version
 # with open("../sleap/version.py") as f:
@@ -35,7 +35,7 @@ version = "1.2.0"
 #     version = re.search("\d.+(?=['\"])", version_file).group(0)
 
 # Release should be the full branch name
-release = "v1.2.0"
+release = "v1.2.1"
 
 html_title = f"SLEAP ({release})"
 html_short_title = "SLEAP"
@@ -132,9 +132,15 @@ html_theme_options = {
     # "dark_logo": "logo.png",
     # https://sphinx-book-theme.readthedocs.io/en/stable/customize/index.html#theme-options
     "repository_url": "https://github.com/murthylab/sleap",
-    "use_repository_button": True,
     "use_download_button": False,
+    "use_fullscreen_button": False,
+    "use_repository_button": True,
+    "use_issues_button": True,
     "extra_navbar": "",
+    # https://sphinx-book-theme.readthedocs.io/en/stable/launch.html
+    # "launch_buttons": {
+    #     "colab_url": "https://{your-colab-url}"
+    # },
 }
 
 myst_number_code_blocks = ["python"]

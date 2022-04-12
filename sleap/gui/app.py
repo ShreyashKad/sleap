@@ -129,6 +129,8 @@ class MainWindow(QMainWindow):
             state=self.state, app=self, update_callback=self.on_data_update
         )
 
+        self.shortcuts = Shortcuts()
+
         self._menu_actions = dict()
         self._buttons = dict()
         self._child_windows = dict()
@@ -142,6 +144,7 @@ class MainWindow(QMainWindow):
         self.state["last_interacted_frame"] = None
         self.state["filename"] = None
         self.state["show non-visible nodes"] = prefs["show non-visible nodes"]
+        self.state["show instances"] = True
         self.state["show labels"] = True
         self.state["show edges"] = True
         self.state["edge style"] = prefs["edge style"]
@@ -319,11 +322,11 @@ class MainWindow(QMainWindow):
 
     def _create_menus(self):
         """Creates main application menus."""
-        shortcuts = Shortcuts()
+        # shortcuts = Shortcuts()
 
         # add basic menu item
         def add_menu_item(menu, key: str, name: str, action: Callable):
-            menu_item = menu.addAction(name, action, shortcuts[key])
+            menu_item = menu.addAction(name, action, self.shortcuts[key])
             self._menu_actions[key] = menu_item
             return menu_item
 
@@ -551,6 +554,7 @@ class MainWindow(QMainWindow):
 
         viewMenu.addSeparator()
 
+        add_menu_check_item(viewMenu, "show instances", "Show Instances")
         add_menu_check_item(
             viewMenu, "show non-visible nodes", "Show Non-Visible Nodes"
         )
@@ -1003,28 +1007,10 @@ class MainWindow(QMainWindow):
         hbw.setLayout(hb)
         skeleton_layout.addWidget(hbw)
 
-        ####### Instances #######
-        instances_layout = _make_dock("Instances")
-        self.instancesTable = GenericTableView(
-            state=self.state,
-            row_name="instance",
-            name_prefix="",
-            model=LabeledFrameTableModel(
-                items=self.state["labeled_frame"], context=self.commands
-            ),
-        )
-        instances_layout.addWidget(self.instancesTable)
-
-        hb = QHBoxLayout()
-        _add_button(hb, "New Instance", lambda x: self.commands.newInstance())
-        _add_button(hb, "Delete Instance", self.commands.deleteSelectedInstance)
-
-        hbw = QWidget()
-        hbw.setLayout(hb)
-        instances_layout.addWidget(hbw)
-
         ####### Suggestions #######
-        suggestions_layout = _make_dock("Labeling Suggestions")
+        suggestions_layout = _make_dock(
+            "Labeling Suggestions", tab_with=videos_layout.parent().parent()
+        )
         self.suggestionsTable = GenericTableView(
             state=self.state,
             is_sortable=True,
@@ -1103,6 +1089,31 @@ class MainWindow(QMainWindow):
         self.suggestionsTable.doubleClicked.connect(goto_suggestion)
 
         self.state.connect("suggestion_idx", self.suggestionsTable.selectRow)
+
+        ####### Instances #######
+        instances_layout = _make_dock(
+            "Instances", tab_with=videos_layout.parent().parent()
+        )
+        self.instancesTable = GenericTableView(
+            state=self.state,
+            row_name="instance",
+            name_prefix="",
+            model=LabeledFrameTableModel(
+                items=self.state["labeled_frame"], context=self.commands
+            ),
+        )
+        instances_layout.addWidget(self.instancesTable)
+
+        hb = QHBoxLayout()
+        _add_button(hb, "New Instance", lambda x: self.commands.newInstance())
+        _add_button(hb, "Delete Instance", self.commands.deleteSelectedInstance)
+
+        hbw = QWidget()
+        hbw.setLayout(hb)
+        instances_layout.addWidget(hbw)
+
+        # Bring videos tab forward.
+        videos_layout.parent().parent().raise_()
 
     def _load_overlays(self):
         """Load all standard video overlays."""
@@ -1361,6 +1372,17 @@ class MainWindow(QMainWindow):
                         f" ({pred_frame_count/current_video.num_frames*100:.2f}%)"
                     )
                     message += " in video"
+
+            lf = self.state["labeled_frame"]
+            # TODO: revisit with LabeledFrame.unused_predictions() & instances_to_show()
+            n_instances = 0 if lf is None else len(lf.instances_to_show)
+            message += f"{spacer}Current frame: {n_instances} instances"
+            if (n_instances > 0) and not self.state["show instances"]:
+                hide_key = self.shortcuts["show instances"].toString()
+                message += f" [Hidden] Press '{hide_key}' to toggle."
+                self.statusBar().setStyleSheet("color: red")
+            else:
+                self.statusBar().setStyleSheet("color: black")
 
         self.statusBar().showMessage(message)
 
